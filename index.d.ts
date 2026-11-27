@@ -114,6 +114,14 @@ Bugs Bunny,22
      * Will change the output format of stream to be `{ byteOffset, row }`.
      */
     readonly outputByteOffset?: boolean;
+
+    /**
+     * If `true`, combines values from repeated header names into arrays.
+     * The default `false` preserves the last value for duplicate headers.
+     *
+     * @default false
+     */
+    readonly useArraysForDuplicateHeaders?: boolean;
   }
 }
 
