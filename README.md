@@ -143,6 +143,15 @@ Default: `"`
 A single-character string used to specify the character used to escape strings
 in a CSV row.
 
+#### useArraysForDuplicateHeaders
+
+Type: `Boolean`  
+Default: `false`
+
+When enabled, repeated CSV header names collect their corresponding cell values in an array rather than overwriting earlier values. Unique headers retain scalar values. By default, the last value wins for duplicate headers, preserving existing behavior.
+
+For example, `a,a,b\\n1,2,3` yields `{ a: ['1', '2'], b: '3' }` with `csv({ useArraysForDuplicateHeaders: true })`.
+
 #### headers
 
 Type: `Array[String] | Boolean`
