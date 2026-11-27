@@ -246,3 +246,46 @@ test('binary stanity', async (t) => {
 
   t.snapshot(stdout)
 })
+
+test('duplicate headers preserve last value by default', async (t) => {
+  const rows = []
+  const parser = csv()
+  parser.on('data', row => rows.push(row))
+  parser.end('a,a,b\n1,2,3\n')
+  await new Promise((resolve, reject) => {
+    parser.on('end', resolve)
+    parser.on('error', reject)
+  })
+  t.deepEqual(rows, [{ a: '2', b: '3' }])
+})
+
+test('duplicate headers can collect values into arrays', async (t) => {
+  const rows = []
+  const parser = csv({ useArraysForDuplicateHeaders: true })
+  parser.on('data', row => rows.push(row))
+  parser.end('a,a,a,b\n1,2,3,4\n5,6,7,8\n')
+  await new Promise((resolve, reject) => {
+    parser.on('end', resolve)
+    parser.on('error', reject)
+  })
+  t.deepEqual(rows, [
+    { a: ['1', '2', '3'], b: '4' },
+    { a: ['5', '6', '7'], b: '8' }
+  ])
+})
+
+test('duplicate mapped headers can collect values without modifying array cells', async (t) => {
+  const rows = []
+  const parser = csv({
+    useArraysForDuplicateHeaders: true,
+    mapHeaders: ({ header }) => header.toLowerCase(),
+    mapValues: ({ value }) => [value]
+  })
+  parser.on('data', row => rows.push(row))
+  parser.end('A,a,b\n1,2,3\n')
+  await new Promise((resolve, reject) => {
+    parser.on('end', resolve)
+    parser.on('error', reject)
+  })
+  t.deepEqual(rows, [{ a: [['1'], ['2']], b: ['3'] }])
+})
