@@ -15,7 +15,8 @@ const defaults = {
   skipLines: null,
   maxRowBytes: Number.MAX_SAFE_INTEGER,
   strict: false,
-  outputByteOffset: false
+  outputByteOffset: false,
+  useArraysForDuplicateHeaders: false
 }
 
 const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
@@ -205,11 +206,23 @@ class CsvParser extends Transform {
   writeRow (cells, byteOffset) {
     const headers = (this.headers === false) ? cells.map((value, index) => index) : this.headers
 
+    const seenHeaders = this.options.useArraysForDuplicateHeaders ? new Set() : null
+    const repeatedHeaders = seenHeaders ? new Set() : null
     const row = cells.reduce((o, cell, index) => {
       const header = headers[index]
       if (header === null) return o // skip columns
       if (header !== undefined) {
-        o[header] = cell
+        if (seenHeaders && seenHeaders.has(header)) {
+          if (repeatedHeaders.has(header)) {
+            o[header].push(cell)
+          } else {
+            o[header] = [o[header], cell]
+            repeatedHeaders.add(header)
+          }
+        } else {
+          o[header] = cell
+          if (seenHeaders) seenHeaders.add(header)
+        }
       } else {
         o[`_${index}`] = cell
       }
